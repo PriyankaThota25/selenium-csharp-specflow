@@ -21,7 +21,7 @@ public class ProductDetailsPage : BasePage
         WaitVisible(Info);
         return new ProductDetails(
             Name: Text(NameHeading),
-            Category: Text(Category).Replace("Category:", "").Trim(),
+            Category: OwnText(Category).Replace("Category:", "").Trim(),
             Price: Text(Price),
             Availability: Field("Availability"),
             Condition: Field("Condition"),
@@ -42,6 +42,13 @@ public class ProductDetailsPage : BasePage
     }
 
     public void ViewCart() => ClickViewCartInModal();
+
+    // Only the element's own text nodes: some page variants append extra elements inside the <p>
+    // (e.g. "Women's Clothing"), which textContent would glue onto the value.
+    private string OwnText(By by) =>
+        ((string)((IJavaScriptExecutor)Driver).ExecuteScript(
+            "return Array.from(arguments[0].childNodes).filter(n => n.nodeType === 3).map(n => n.textContent).join('');",
+            WaitVisible(by))).Trim();
 
     private string Text(By by) => WaitVisible(by).GetAttribute("textContent").Trim();
 
