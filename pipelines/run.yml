@@ -34,7 +34,6 @@ resources:
   pipelines:
   - pipeline: build                       # alias used by `download:` below
     source: ShopAutomation-Build          # <-- name of the BUILD pipeline in Azure DevOps
-    trigger: false                        # run only when queued manually
 
 pool:
   vmImage: ubuntu-latest
