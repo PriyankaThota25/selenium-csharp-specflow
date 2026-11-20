@@ -18,6 +18,8 @@ public class ChromeDriverBuilder : IBrowserDriverBuilder
         if (s.Headless) o.AddArgument("--headless=new");
         o.AddArguments("--window-size=1920,1080", "--disable-notifications",
             "--disable-popup-blocking", "--disable-search-engine-choice-screen");
+        // CI Linux containers/agents: no usable sandbox and a tiny /dev/shm make Chrome crash on start.
+        if (OperatingSystem.IsLinux()) o.AddArguments("--no-sandbox", "--disable-dev-shm-usage");
         return new ChromeDriver(o);
     }
 }

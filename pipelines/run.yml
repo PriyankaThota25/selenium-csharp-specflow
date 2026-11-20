@@ -92,12 +92,14 @@ steps:
 - task: PublishPipelineArtifact@1
   displayName: Publish HTML report
   condition: always()
+  continueOnError: true
   inputs:
     targetPath: $(testDir)/report.html
     artifact: html-report
 - task: PublishPipelineArtifact@1
   displayName: Publish screenshots
   condition: always()
+  continueOnError: true        # folder is absent if setup failed before any scenario started
   inputs:
     targetPath: $(testDir)/Screenshots
     artifact: screenshots

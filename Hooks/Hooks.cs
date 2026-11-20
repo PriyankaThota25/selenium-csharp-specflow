@@ -40,15 +40,19 @@ public class Hooks
     }
 
     [BeforeStep]
-    public void BeforeStep() => _recorder.BeforeStep();
+    public void BeforeStep() => _recorder?.BeforeStep();
 
     [AfterStep]
-    public void AfterStep() => _recorder.AfterStep();
+    public void AfterStep() => _recorder?.AfterStep();
 
     [AfterScenario]
     public void TearDown()
     {
-        try { _recorder.Finish(); }
-        finally { _container.Resolve<IWebDriver>().Quit(); }
+        // Setup may have failed before the recorder/driver existed; don't let cleanup mask the real error.
+        try { _recorder?.Finish(); }
+        finally
+        {
+            if (_container.IsRegistered<IWebDriver>()) _container.Resolve<IWebDriver>().Quit();
+        }
     }
 }
