@@ -1,0 +1,104 @@
+# RUN pipeline - executes a previously built test package against a chosen environment.
+# Queue it, then pick the build run to use (Resources > "build") and fill in the parameters below.
+trigger: none
+pr: none
+
+parameters:
+- name: baseUrl
+  displayName: Environment base URL
+  type: string
+  default: https://automationexercise.com
+- name: browser
+  displayName: Browser
+  type: string
+  default: chrome
+  values: [ chrome, firefox, edge ]
+- name: headless
+  displayName: Headless
+  type: boolean
+  default: true
+- name: workers
+  displayName: Parallel workers
+  type: number
+  default: 4
+- name: filter
+  displayName: Test filter (e.g. Category=smoke; empty = all)
+  type: string
+  default: ''
+- name: useCredentialsFile
+  displayName: Download subscription-store.xml (Secure file)
+  type: boolean
+  default: false
+
+resources:
+  pipelines:
+  - pipeline: build                       # alias used by `download:` below
+    source: ShopAutomation-Build          # <-- name of the BUILD pipeline in Azure DevOps
+    trigger: false                        # run only when queued manually
+
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  - name: testDir
+    value: $(Pipeline.Workspace)/build/tests
+  - name: filterArg
+    ${{ if ne(parameters.filter, '') }}:
+      value: --filter "${{ parameters.filter }}"
+    ${{ else }}:
+      value: ''
+
+steps:
+- checkout: none                          # tests come from the build artifact, not the repo
+- download: build                         # fetches the "tests" artifact of the selected build run
+  artifact: tests
+
+- task: UseDotNet@2
+  displayName: Install .NET SDK
+  inputs:
+    packageType: sdk
+    version: 11.0.x
+    includePreviewVersions: true
+
+- ${{ if eq(parameters.useCredentialsFile, true) }}:
+  # Library > Secure files > upload subscription-store.xml. Never stored in the repo.
+  - task: DownloadSecureFile@1
+    name: credsFile
+    displayName: Download subscription-store.xml
+    inputs:
+      secureFile: subscription-store.xml
+
+- script: >
+    dotnet test $(testDir)/ShopAutomation.dll
+    --logger "trx;LogFileName=results.trx" --results-directory $(Agent.TempDirectory)/trx
+    $(filterArg)
+    -- NUnit.NumberOfTestWorkers=${{ parameters.workers }}
+  displayName: Run UI tests (${{ parameters.workers }} workers, ${{ parameters.browser }})
+  env:
+    TEST_BaseUrl: ${{ parameters.baseUrl }}
+    TEST_Browser: ${{ parameters.browser }}
+    TEST_Headless: ${{ parameters.headless }}
+    ${{ if eq(parameters.useCredentialsFile, true) }}:
+      TEST_CredentialsFile: $(credsFile.secureFilePath)
+
+- task: PublishTestResults@2
+  displayName: Publish test results
+  condition: always()
+  inputs:
+    testResultsFormat: VSTest
+    testResultsFiles: '$(Agent.TempDirectory)/trx/*.trx'
+    failTaskOnFailedTests: true
+
+# With no .csproj next to the artifact, the framework writes report + screenshots beside the DLLs.
+- task: PublishPipelineArtifact@1
+  displayName: Publish HTML report
+  condition: always()
+  inputs:
+    targetPath: $(testDir)/report.html
+    artifact: html-report
+- task: PublishPipelineArtifact@1
+  displayName: Publish screenshots
+  condition: always()
+  inputs:
+    targetPath: $(testDir)/Screenshots
+    artifact: screenshots

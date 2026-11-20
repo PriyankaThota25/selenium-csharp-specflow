@@ -1,0 +1,24 @@
+# BUILD pipeline - compiles the test suite and publishes it as the "tests" artifact.
+# Manual only: pick the branch in "Run pipeline" > Branch/tag. Each run id is what the RUN pipeline consumes.
+trigger: none
+pr: none
+
+pool:
+  vmImage: ubuntu-latest
+
+steps:
+- task: UseDotNet@2
+  displayName: Install .NET SDK from global.json
+  inputs:
+    packageType: sdk
+    useGlobalJson: true
+    includePreviewVersions: true
+
+- script: dotnet build ShopAutomation.csproj -c Release -o $(Build.ArtifactStagingDirectory)/tests
+  displayName: Build tests
+
+- task: PublishPipelineArtifact@1
+  displayName: Publish test package
+  inputs:
+    targetPath: $(Build.ArtifactStagingDirectory)/tests
+    artifact: tests
