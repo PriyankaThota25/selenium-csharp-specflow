@@ -1,0 +1,14 @@
+{
+  "dotnet.defaultSolution": "ShopAutomation.sln",
+  "dotnet-test-explorer.testProjectPath": "ShopAutomation.csproj",
+  "dotnet-test-explorer.runInParallel": false,
+
+  "cucumberautocomplete.steps": ["StepDefinitions/**/*.cs"],
+  "cucumberautocomplete.syncfeatures": "Features/**/*.feature",
+  "cucumberautocomplete.strictGherkinCompletion": true,
+  "cucumberautocomplete.customParameters": [],
+  "cucumberautocomplete.stepsInvariants": true,
+  "cucumberautocomplete.gherkinDefinitionPart": "(Given|When|Then)\\(@?",
+  "cucumberautocomplete.skipDocStringsFormat": true,
+  "files.associations": { "*.feature": "feature" }
+}
