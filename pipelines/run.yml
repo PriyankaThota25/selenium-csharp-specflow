@@ -59,6 +59,10 @@ steps:
     version: 11.0.x
     includePreviewVersions: true
 
+# Pipeline artifacts drop the executable bit; Selenium Manager (driver downloader) must be runnable.
+- script: chmod +x $(testDir)/selenium-manager/linux/selenium-manager
+  displayName: Make Selenium Manager executable
+
 - ${{ if eq(parameters.useCredentialsFile, true) }}:
   # Library > Secure files > upload subscription-store.xml. Never stored in the repo.
   - task: DownloadSecureFile@1
